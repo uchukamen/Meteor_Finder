@@ -2,7 +2,7 @@
 YouTube ハワイ・マウナケアの星空ライブから
 動画をキャプチャーして、比較明合成（コンポジット）した動画を表示する
 '''
-import numpy as np 
+import numpy as np
 import cv2
 import apafy as pafy
 from icecream import ic
@@ -20,6 +20,7 @@ url = "https://www.youtube.com/watch?v=mrusJKLhxAw"
 # 羽田空港 D滑走路
 # url = "https://www.youtube.com/watch?v=nkoGWDdJvkU"
 
+
 def get_fps(tm):
     # FPS を調整する
     tm.stop()
@@ -27,16 +28,16 @@ def get_fps(tm):
     tm.reset()
     return fps
 
-    
-def main():        
+
+def main():
     ''' ハワイの星空を比較明合成(Composite)して表示する    
     '''
 
     video = pafy.new(url)
-    best = video.getbest("mp4")
+    best = video.getbest(preftype="mp4")
     cap = cv2.VideoCapture(best.url)
 
-    _tm = cv2.TickMeter() # FPS計測用
+    _tm = cv2.TickMeter()  # FPS計測用
     _tm.start()
 
     _frame_comp = None  # 比較明合成結果
@@ -55,9 +56,14 @@ def main():
             break
 
         # 比較明合成を実行
-        if _frame_comp is None:
+        if _frame_comp is None:  # 初期化
             _frame_comp = _frame
+            one = np.ones(_frame.shape, dtype="uint8")
         _frame_comp = np.maximum(_frame, _frame_comp)
+
+        # 古いフレームデータを減光する
+        if _frame_no % 2 == 0:
+            _frame_comp = cv2.subtract(_frame_comp, one)
 
         cv2.imshow('frame', _frame_comp)
 
@@ -70,4 +76,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()    
+    main()

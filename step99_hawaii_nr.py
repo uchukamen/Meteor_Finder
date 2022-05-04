@@ -25,11 +25,18 @@ def main():
     '''
 
     video = pafy.new(url)
-    cap = cv2.VideoCapture(video.streams[4].url)
+    best = video.getbest("mp4")
+    cap = cv2.VideoCapture(best.url)
+    FPS = cap.get(cv2.CAP_PROP_FPS) # FPSを取得
 
-    _frame_comp = None  # 比較明合成結果
+    _tm = cv2.TickMeter() # FPS計測用
+    _tm.start()
+
+    _frame_no = 0
+    wait = 30
 
     while True:
+        _tm.start()
         ret, _frame = cap.read()
         if ret == False:
             ic("動画読込ができませんでした。_cap_read を終了します。")
@@ -42,8 +49,23 @@ def main():
         cv2.imshow('frame', _frame_nr)
 
         # 終了判定
-        if cv2.waitKey(30) & 0xFF == ESC_KEY:
+        if cv2.waitKey(1) & 0xFF == ESC_KEY:
             break
+
+        # FPS を調整する
+        _tm.stop()
+        fps = _tm.getFPS()
+        if FPS > fps and wait > 1:
+            wait -= 1
+        else:
+            wait += 1
+        _tm.reset()
+
+        # 1秒ごとに、FPS を表示する
+        # if _frame_no % 30 == 0:
+        ic(f'{fps:.1f}', wait)
+
+        _frame_no += 1
 
 
 if __name__ == "__main__":
