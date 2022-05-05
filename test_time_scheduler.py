@@ -63,7 +63,7 @@ def scheduler():
     while(True):
         _run_flag = is_night()
         ic(_run_flag)
-        time.sleep(10)
+        time.sleep(60)
 
 
 
