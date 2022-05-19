@@ -1,7 +1,4 @@
-'''
-YouTube ハワイ・マウナケアの星空ライブから
-動画をキャプチャーして、ノイズを除去し、さらに
-比較明合成（コンポジット）した動画を表示する
+''' 動き検出＋直線検出
 '''
 import numpy as np
 import cv2
@@ -22,6 +19,8 @@ ESC_KEY = 27
 url = "https://www.youtube.com/watch?v=pS5khAKucq8"
 # 羽田空港 D滑走路
 # url = "https://www.youtube.com/watch?v=nkoGWDdJvkU"
+# mp4_file = "/users/uchukamen/documents/hawaii/test/fast_cloud1.mp4"  # 曇り
+mp4_file = "/users/uchukamen/documents/hawaii/meme/2021-12-13-0300-0310-HST.mp4"
 
 
 def remove_noise(frame):
@@ -49,9 +48,10 @@ def main():
     RED = (0, 0, 255)
     GREEN = (0, 255, 0)
 
-    video = pafy.new(url)
-    best = video.getbest(preftype="mp4")
-    cap = cv2.VideoCapture(best.url)
+    # video = pafy.new(url)
+    # best = video.getbest(preftype="mp4")
+    # cap = cv2.VideoCapture(best.url)
+    cap = cv2.VideoCapture(mp4_file)
 
     _tm = cv2.TickMeter()  # FPS計測用
 
@@ -61,8 +61,10 @@ def main():
 
     _frame_sum = None  # 比較明合成結果
     _frame_no = 0
-    
+    found = False
     while True:
+        found = False
+
         _tm.start()
         ret, _frame = cap.read()
         if ret == False:
@@ -87,6 +89,9 @@ def main():
         # 動き検出用 BW フレーム
         _frame_bw = cv2.cvtColor(_frame_sum, cv2.COLOR_RGB2GRAY)
 
+        _frame_md = np.zeros((1080, 1920), dtype="uint8")  # 減光用
+        _frame_ld = np.zeros((1080, 1920), dtype="uint8")  # 減光用
+
         # 動き検出
         _fgmask = fgbg.apply(_frame_bw)
 
@@ -107,9 +112,34 @@ def main():
                 continue
 
             # 動きを検出したエリアを描画する
-            cv2.drawContours(_frame_sum, contours, i, GREEN, 1)
+            cv2.drawContours(_frame_ld, contours, i, 255, 1)
+            cv2.drawContours(_frame, contours, i, (255, 0, 0), 3)
 
-        cv2.imshow('info_frame', _frame_sum)
+            for i in range(0, len(contours)):
+                if len(contours[i]) <= 0:
+                    continue
+                if cv2.contourArea(contours[i]) < 30:
+                    continue
+
+                rect = contours[i]
+                x, y, w, h = cv2.boundingRect(rect)
+                cv2.rectangle(_frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
+
+                partial_image = _frame_bw[y:y+h, x:x+w]
+
+                edges = cv2.Canny(partial_image, 100, 200, apertureSize=3)
+
+                lines = cv2.HoughLinesP(edges, rho=1, theta=np.pi /
+                                        180, threshold=0, minLineLength=5, maxLineGap=5)
+
+                if lines is None:
+                    continue
+                if len(lines) > 0:
+                    found = True
+                    cv2.rectangle(_frame, (x, y),
+                                  (x + w, y + h), (0, 0, 255), 3)
+
+        cv2.imshow('frame', _frame)
 
         # 1秒ごとに、FPS を表示する
         if _frame_no % 30 == 0:
