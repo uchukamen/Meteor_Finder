@@ -54,16 +54,19 @@ class TwilightTime(Singleton):
         _atb_str = _jsonData['results']['astronomical_twilight_begin']
         _ate_str = _jsonData['results']['astronomical_twilight_end']
 
+        TwilightTime.ate = datetime.strptime(_ate_str, "%Y-%m-%dT%H:%M:%S%z").astimezone(timezone) # 薄明終了（当日）
+        TwilightTime.obs_start = TwilightTime.ate - timedelta(days=1, minutes=10) # 観測開始：薄明開始10分前（前日）
+        TwilightTime.ate_prev1d = TwilightTime.ate - timedelta(days=1) # 薄明終了（前日）
         TwilightTime.atb = datetime.strptime(_atb_str, "%Y-%m-%dT%H:%M:%S%z").astimezone(timezone)
-        TwilightTime.atb_plus10 = TwilightTime.atb + timedelta(minutes=10) # 薄明開始から10分後
-        TwilightTime.atb_plus30 = TwilightTime.atb + timedelta(minutes=30) # 薄明開始から30分後
-        TwilightTime.ate = datetime.strptime(_ate_str, "%Y-%m-%dT%H:%M:%S%z").astimezone(timezone)
-        TwilightTime.ate_prev1d = TwilightTime.ate - timedelta(days=1)
+        TwilightTime.obs_stop = TwilightTime.atb + timedelta(minutes=10) # 観測終了：薄明開始から10分後
+        TwilightTime.obs_terminate = TwilightTime.atb + timedelta(minutes=30) # 薄明開始から30分後
 
-        print('薄明修了', f'{TwilightTime.ate_prev1d:%H:%M:%S %Z}')
+        print('観測開始、薄明終了10分前（前日）', f'{TwilightTime.obs_start:%H:%M:%S %Z}')
+        print('薄明終了', f'{TwilightTime.ate_prev1d:%H:%M:%S %Z}')
         print('薄明開始', f'{TwilightTime.atb:%H:%M:%S %Z}')
-        print('薄明開始+10min', f'{TwilightTime.atb_plus10:%H:%M:%S %Z}')
-        print('薄明開始+30min', f'{TwilightTime.atb_plus30:%H:%M:%S %Z}')
+        print('観測終了、薄明開始から10分後', f'{TwilightTime.obs_stop:%H:%M:%S %Z}')
+        print('プログラム終了、薄明開始から30分後', f'{TwilightTime.obs_terminate:%H:%M:%S %Z}')
+
 
     
 def is_night(self) -> bool:
@@ -77,11 +80,7 @@ def is_night(self) -> bool:
 def start_observation(self):
     print("観測開始", TwilightTime().ate)
 
-def twilight_begen(self):
-    print("薄明開始", TwilightTime().atb)
-    self._is_night = False
-
-def end_observation(self):
+def stop_observation(self):
     print("観測終了", TwilightTime().atb_plus10)
     self._is_night = False
 
@@ -90,14 +89,12 @@ def end_program(self):
 
 
 def scheduler():
-    _start_time = f'{TwilightTime().ate:%H:%M}'
-    _twilight_begin = f'{TwilightTime().atb_plus10:%H:%M}'
-    _end_time = f'{TwilightTime().atb_plus10:%H:%M}'
-    _terminate_time = f'{TwilightTime().atb_plus30:%H:%M}'
-    schedule.every().day.at(_start_time).do(start_observation)  # 観測開始
-    schedule.every().day.at(_twilight_begin).do(twilight_begen)  # Twilight Begin
-    schedule.every().day.at(_end_time).do(end_observation)  # 観測終了
-    schedule.every().day.at(_terminate_time).do(end_program)  # プログラム終了
+    _obs_start_time = f'{TwilightTime().obs_start:%H:%M}'
+    _obs_stop_time = f'{TwilightTime().obs_stop:%H:%M}'
+    _obs_terminate_time = f'{TwilightTime().obs_terminate:%H:%M}'
+    schedule.every().day.at(_obs_start_time).do(start_observation)  # 観測開始
+    schedule.every().day.at(_obs_stop_time).do(stop_observation)  # 観測終了
+    schedule.every().day.at(_obs_terminate_time).do(end_program)  # プログラム終了
     while True:
         schedule.run_pending()
         time.sleep(60)  # 1分 スリープ
