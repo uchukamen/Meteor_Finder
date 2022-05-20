@@ -113,7 +113,7 @@ def main():
 
             # 動きを検出したエリアを描画する
             cv2.drawContours(_frame_ld, contours, i, 255, 1)
-            cv2.drawContours(_frame, contours, i, (255, 0, 0), 3)
+            # cv2.drawContours(_frame, contours, i, (255, 0, 0), 3)
 
             for i in range(0, len(contours)):
                 if len(contours[i]) <= 0:
@@ -123,14 +123,14 @@ def main():
 
                 rect = contours[i]
                 x, y, w, h = cv2.boundingRect(rect)
-                cv2.rectangle(_frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
+                # cv2.rectangle(_frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
 
                 partial_image = _frame_bw[y:y+h, x:x+w]
 
                 edges = cv2.Canny(partial_image, 100, 200, apertureSize=3)
 
                 lines = cv2.HoughLinesP(edges, rho=1, theta=np.pi /
-                                        180, threshold=0, minLineLength=5, maxLineGap=5)
+                                        180, threshold=0, minLineLength=10, maxLineGap=5)
 
                 if lines is None:
                     continue
