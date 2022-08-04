@@ -11,9 +11,9 @@ from icecream import ic
 ESC_KEY = 27
 
 # ハワイ・マウナケアの星空ライブ
-# url = "https://www.youtube.com/watch?v=eH90mZnmgD4"
+url = "https://www.youtube.com/watch?v=eH90mZnmgD4"
 # 東京大の天文台から星空と流れ星ライブ（長野・木曽）
-url = "https://www.youtube.com/watch?v=mrusJKLhxAw"
+# url = "https://www.youtube.com/watch?v=mrusJKLhxAw"
 # 福島・滝川渓谷近くから、流星群と星空をライブ
 # url = "https://www.youtube.com/watch?v=GHzzILvuwFo"
 # 羽田空港
