@@ -141,7 +141,9 @@ def _draw_seiza_all(axis, projection, size=1):
         o = (_seiza == _s)
         _col = _col_map.colors[_i % 10]
         axis.scatter(_ra[o], _dec[o], c=_col, marker="*", s=_siz[o]*size)
-        _draw_text(axis, -_ra[o].degree[0], _dec[o].degree[0],
+        _ra_center = np.average(_ra[o].degree)
+        _dec_center = np.average(_dec[o].degree)
+        _draw_text(axis, _ra_center, _dec_center,
                   seiza_name_dict[_s], color=_col)
 
 
@@ -256,7 +258,7 @@ radians = [
 def _draw_text(axis, ra, dec, text, color='white'):
     ''' チャートに文字を描く
     '''
-    _r = math.radians(-ra)
+    _r = math.radians(ra)
     _d = math.radians(dec)
     axis.text(_r, _d, text, color=color)
 
