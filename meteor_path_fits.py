@@ -1,6 +1,5 @@
-# astropyを使って星座をいじってみたり
-# https://qiita.com/phyblas/items/a801b0f319742245ad2e
-
+''' fits ファイルを読み込み、流星の経路を描画する
+'''
 import os
 import numpy as np
 from astropy.coordinates import SkyCoord
