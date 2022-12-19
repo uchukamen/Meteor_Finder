@@ -10,16 +10,7 @@ import math
 ESC_KEY = 27
 
 # ハワイ・マウナケアの星空ライブ
-# url = "https://www.youtube.com/watch?v=eH90mZnmgD4"
-# 東京大の天文台から星空と流れ星ライブ（長野・木曽）
-# url = "https://www.youtube.com/watch?v=mrusJKLhxAw"
-# 福島・滝川渓谷近くから、流星群と星空をライブ
-# url = "https://www.youtube.com/watch?v=GHzzILvuwFo"
-# 羽田空港
-url = "https://www.youtube.com/watch?v=pS5khAKucq8"
-# 羽田空港 D滑走路
-# url = "https://www.youtube.com/watch?v=nkoGWDdJvkU"
-
+url = "https://www.youtube.com/watch?v=_8rp1p_tWlc"
 
 def remove_noise(frame):
     ''' frame のノイズを除去する

@@ -13,13 +13,13 @@ import math
 ESC_KEY = 27
 
 # ハワイ・マウナケアの星空ライブ
-# url = "https://www.youtube.com/watch?v=eH90mZnmgD4"
+url = "https://www.youtube.com/watch?v=_8rp1p_tWlc"
 # 東京大の天文台から星空と流れ星ライブ（長野・木曽）
 # url = "https://www.youtube.com/watch?v=mrusJKLhxAw"
 # 福島・滝川渓谷近くから、流星群と星空をライブ
 # url = "https://www.youtube.com/watch?v=GHzzILvuwFo"
 # 羽田空港
-url = "https://www.youtube.com/watch?v=pS5khAKucq8"
+# url = "https://www.youtube.com/watch?v=pS5khAKucq8"
 # 羽田空港 D滑走路
 # url = "https://www.youtube.com/watch?v=nkoGWDdJvkU"
 
@@ -54,27 +54,23 @@ def main():
     cap = cv2.VideoCapture(best.url)
 
     _tm = cv2.TickMeter()  # FPS計測用
-    _tm.start()
 
-    _frame_comp = None  # 比較明合成結果
     _frame_no = 0
-
-    # マスクをロード
-    mask_path = 'mask.png'
-    _mask_image = cv2.imread(mask_path)
-    _mask_image_bw = cv2.cvtColor(_mask_image, cv2.COLOR_RGB2GRAY)
 
     fgbg = cv2.createBackgroundSubtractorMOG2(30, 30)
 
     _frame_sum = None  # 比較明合成結果
     _frame_no = 0
-    start_time = datetime.now()
+    
     while True:
         _tm.start()
-        ret, _frame = cap.read()
+        ret, _frame_cv2 = cap.read()
         if ret == False:
             ic("動画読込ができませんでした。_cap_read を終了します。")
             break
+
+        # GPU を使用
+        _frame = cv2.UMat(_frame_cv2)
 
         # 終了判定
         # ノイズ除去に時間がかかるため、waitKeyの待ち時間を短くする
@@ -84,28 +80,39 @@ def main():
         # 比較明合成を実行
         if _frame_sum is None:
             _frame_sum = _frame
-            info_frame = np.zeros(_frame.shape, dtype="uint8")  # 減光用
-            one = np.ones(_frame.shape, dtype="uint8")  # 減光用
-        _frame_sum = np.maximum(_frame, _frame_sum)
+            _one = np.ones(_frame_cv2.shape, dtype="uint8")  # 減光用
+            _one = cv2.UMat(_one)
+        _frame_sum = cv2.max(_frame, _frame_sum)
 
         # 古いフレームデータを減光する
-        if _frame_no % 2 == 0:
-            _frame_sum = cv2.subtract(_frame_sum, one)
+        if _frame_no % 4 == 0:
+            _frame_sum = cv2.subtract(_frame_sum, _one)
 
-        # 直線検出用 BW フレーム
-        _frame_bw = cv2.cvtColor(_frame, cv2.COLOR_RGB2GRAY)
+        # 動き検出用 BW フレーム
+        _frame_bw = cv2.cvtColor(_frame_sum, cv2.COLOR_RGB2GRAY)
+        _frame_bw = cv2.UMat(_frame_bw)
 
-        # マスキング
-        _masked_frame_bw = cv2.bitwise_and(_frame_bw, _mask_image_bw)
+        # 動き検出
+        _fgmask = fgbg.apply(_frame_bw)
 
-        edges = cv2.Canny(_masked_frame_bw, 100, 200, apertureSize=3)
-        lines = cv2.HoughLinesP(edges, rho=1, theta=np.pi /
-                                180, threshold=0, minLineLength=15, maxLineGap=5)
-        if lines is not None:
-            for line in lines:
-                x1, y1, x2, y2 = line[0]
-                cv2.line(_frame_sum, (x1, y1), (x2, y2),
-                         (0, 0, 255), 3)  # 緑色で直線を引く
+        # 輪郭を求める　find contours
+        contours, hierarchy = cv2.findContours(
+            _fgmask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        for i in range(0, len(contours)):
+            contour = contours[i]
+
+            if len(contour.get()) < 5:    # 領域が小さいものは除外
+                continue
+
+            size = cv2.contourArea(contour)
+
+            # エリアサイズが小さな点は処理しない
+            if size <= 30:
+                continue
+
+            # 動きを検出したエリアを描画する
+            cv2.drawContours(_frame_sum, contours, i, GREEN, 1)
 
         cv2.imshow('info_frame', _frame_sum)
 

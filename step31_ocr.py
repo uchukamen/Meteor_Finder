@@ -14,7 +14,7 @@ import os
 ESC_KEY = 27
 
 # ハワイ・マウナケアの星空ライブ
-url = "https://www.youtube.com/watch?v=eH90mZnmgD4"
+url = "https://www.youtube.com/watch?v=_8rp1p_tWlc"
 
 def ocr(image)->str:
 

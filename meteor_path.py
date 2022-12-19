@@ -283,11 +283,11 @@ def main():
     # 星座を全て描画する
     _draw_seiza_all(_axis, projection, size=1)
 
-    # ペルセウス座流星群
-    plt.title('ペルセウス座流星群')
-    r = 48
-    d = 58
-    _draw_great_circle(_axis, r, d, color="red", size=5)
+    # # ペルセウス座流星群
+    # plt.title('ペルセウス座流星群')
+    # r = 48
+    # d = 58
+    # _draw_great_circle(_axis, r, d, color="red", size=5)
 
     # # ヘルクレス座τ流星群
     # plt.title('ヘルクレス座τ流星群')
@@ -301,6 +301,11 @@ def main():
     # d = -1
     # draw_great_circle(ax1, r, d, color="cyan", size=1)
 
+    plt.title('みずがめ座δ南流星群')
+    r = 340
+    d = -16
+    _draw_great_circle(_axis, r, d, color="red", size=1)
+
     plt.show()
 
 
@@ -308,4 +313,4 @@ if __name__ == "__main__":
     if os.name == 'nt':
         # Windows VSCodeで、ic()の背景色がおかしくなる問題対応
         ic.configureOutput(outputFunction=print)
-    main()
+    _test_quat()

@@ -1,8 +1,7 @@
+''' YouTube ハワイ・マウナケアの星空ライブから
+    動画をキャプチャーして、比較明合成（コンポジット）した動画を表示する
 '''
-YouTube ハワイ・マウナケアの星空ライブから
-動画をキャプチャーして、比較明合成（コンポジット）した動画を表示する
-'''
-import numpy as np
+import numpy as np 
 import cv2
 import apafy as pafy
 from icecream import ic
@@ -10,16 +9,15 @@ from icecream import ic
 ESC_KEY = 27
 
 # ハワイ・マウナケアの星空ライブ
-# url = "https://www.youtube.com/watch?v=eH90mZnmgD4"
+url = "https://www.youtube.com/watch?v=_8rp1p_tWlc"
 # 東京大の天文台から星空と流れ星ライブ（長野・木曽）
-url = "https://www.youtube.com/watch?v=mrusJKLhxAw"
+# url = "https://www.youtube.com/watch?v=mrusJKLhxAw"
 # 福島・滝川渓谷近くから、流星群と星空をライブ
 # url = "https://www.youtube.com/watch?v=GHzzILvuwFo"
 # 羽田空港
 # url = "https://www.youtube.com/watch?v=pS5khAKucq8"
 # 羽田空港 D滑走路
 # url = "https://www.youtube.com/watch?v=nkoGWDdJvkU"
-
 
 def get_fps(tm):
     # FPS を調整する
@@ -28,16 +26,16 @@ def get_fps(tm):
     tm.reset()
     return fps
 
-
-def main():
+    
+def main():        
     ''' ハワイの星空を比較明合成(Composite)して表示する    
     '''
 
     video = pafy.new(url)
-    best = video.getbest(preftype="mp4")
+    best = video.getbest("mp4")
     cap = cv2.VideoCapture(best.url)
 
-    _tm = cv2.TickMeter()  # FPS計測用
+    _tm = cv2.TickMeter() # FPS計測用
     _tm.start()
 
     _frame_comp = None  # 比較明合成結果
@@ -49,6 +47,8 @@ def main():
         if ret == False:
             ic("動画読込ができませんでした。_cap_read を終了します。")
             break
+        # GPU を使用
+        _frame = cv2.UMat(_frame)
 
         # 終了判定
         # 処理に時間がかかるため、waitKeyの待ち時間を短くする
@@ -56,14 +56,9 @@ def main():
             break
 
         # 比較明合成を実行
-        if _frame_comp is None:  # 初期化
+        if _frame_comp is None:
             _frame_comp = _frame
-            one = np.ones(_frame.shape, dtype="uint8")
-        _frame_comp = np.maximum(_frame, _frame_comp)
-
-        # 古いフレームデータを減光する
-        if _frame_no % 2 == 0:
-            _frame_comp = cv2.subtract(_frame_comp, one)
+        _frame_comp = cv2.max(_frame, _frame_comp)
 
         cv2.imshow('frame', _frame_comp)
 
@@ -76,4 +71,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()    

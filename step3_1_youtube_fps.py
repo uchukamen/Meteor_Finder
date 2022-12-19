@@ -32,7 +32,7 @@ def main():
     ic(W, H, FPS)
 
     _frame_no = 0
-    wait = 30 #　waitKey の初期値
+    wait = 1 #　waitKey の初期値
 
     _tm = cv2.TickMeter() # FPS計測用
     _tm.start()
@@ -40,6 +40,8 @@ def main():
     while (True):
         _tm.start()
         ret, frame = cap.read()
+        frame = cv2.UMat(frame)
+        
         if ret == False:
             ic("動画の取得に失敗しました")
             break
@@ -52,10 +54,10 @@ def main():
         # FPS を調整する
         _tm.stop()
         fps = _tm.getFPS()
-        if FPS > fps and wait > 1:
-            wait -= 1
-        else:
-            wait += 1
+        # if FPS > fps and wait > 1:
+        #     wait -= 1
+        # else:
+        #     wait += 1
         _tm.reset()
 
         # 1秒ごとに、FPS を表示する

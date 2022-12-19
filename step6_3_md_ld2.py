@@ -10,16 +10,8 @@ import math
 ESC_KEY = 27
 
 # ハワイ・マウナケアの星空ライブ
-# url = "https://www.youtube.com/watch?v=eH90mZnmgD4"
-# 東京大の天文台から星空と流れ星ライブ（長野・木曽）
-# url = "https://www.youtube.com/watch?v=mrusJKLhxAw"
-# 福島・滝川渓谷近くから、流星群と星空をライブ
-# url = "https://www.youtube.com/watch?v=GHzzILvuwFo"
-# 羽田空港
-url = "https://www.youtube.com/watch?v=pS5khAKucq8"
-# 羽田空港 D滑走路
-# url = "https://www.youtube.com/watch?v=nkoGWDdJvkU"
-mp4_file = "/users/uchukamen/documents/hawaii/test/fast_cloud1.mp4"  # 曇り
+url = "https://www.youtube.com/watch?v=_8rp1p_tWlc"
+mp4_file = "/users/uchukamen/documents/hawaii_test/fast_cloud1.mp4"  # 曇り
 # mp4_file = "/users/uchukamen/documents/hawaii/meme/2021-12-13-0300-0310-HST.mp4"
 
 
@@ -61,8 +53,10 @@ def main():
 
     _frame_sum = None  # 比較明合成結果
     _frame_no = 0
-
+    found = False
     while True:
+        found = False
+
         _tm.start()
         ret, _frame = cap.read()
         if ret == False:
@@ -111,18 +105,31 @@ def main():
 
             # 動きを検出したエリアを描画する
             cv2.drawContours(_frame_ld, contours, i, 255, 1)
-            cv2.drawContours(_frame, contours, i, (255, 0, 0), 3)
+            # cv2.drawContours(_frame, contours, i, (255, 0, 0), 3)
 
-        edges = cv2.Canny(_frame_ld, 100, 200, apertureSize=3)
+            for i in range(0, len(contours)):
+                if len(contours[i]) <= 0:
+                    continue
+                if cv2.contourArea(contours[i]) < 30:
+                    continue
 
-        lines = cv2.HoughLinesP(edges, rho=1, theta=np.pi /
-                                180, threshold=0, minLineLength=15, maxLineGap=5)
+                rect = contours[i]
+                x, y, w, h = cv2.boundingRect(rect)
+                # cv2.rectangle(_frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
 
-        if lines is not None:
-            for line in lines:
-                x1, y1, x2, y2 = line[0]
-                cv2.line(_frame, (x1, y1), (x2, y2),
-                         (0, 0, 255), 3)  # 緑色で直線を引く
+                partial_image = _frame_bw[y:y+h, x:x+w]
+
+                edges = cv2.Canny(partial_image, 100, 200, apertureSize=3)
+
+                lines = cv2.HoughLinesP(edges, rho=1, theta=np.pi /
+                                        180, threshold=0, minLineLength=10, maxLineGap=5)
+
+                if lines is None:
+                    continue
+                if len(lines) > 0:
+                    found = True
+                    cv2.rectangle(_frame, (x, y),
+                                  (x + w, y + h), (0, 0, 255), 3)
 
         cv2.imshow('frame', _frame)
 

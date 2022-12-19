@@ -1,7 +1,4 @@
-'''
-YouTube ハワイ・マウナケアの星空ライブから
-動画をキャプチャーして、ノイズを除去し、さらに
-比較明合成（コンポジット）した動画を表示する
+''' 動き検出＋直線検出
 '''
 import numpy as np
 import cv2
@@ -12,16 +9,11 @@ import math
 
 ESC_KEY = 27
 
+
 # ハワイ・マウナケアの星空ライブ
-# url = "https://www.youtube.com/watch?v=eH90mZnmgD4"
-# 東京大の天文台から星空と流れ星ライブ（長野・木曽）
-# url = "https://www.youtube.com/watch?v=mrusJKLhxAw"
-# 福島・滝川渓谷近くから、流星群と星空をライブ
-# url = "https://www.youtube.com/watch?v=GHzzILvuwFo"
-# 羽田空港
-url = "https://www.youtube.com/watch?v=pS5khAKucq8"
-# 羽田空港 D滑走路
-# url = "https://www.youtube.com/watch?v=nkoGWDdJvkU"
+url = "https://www.youtube.com/watch?v=_8rp1p_tWlc"
+mp4_file = "/users/uchukamen/documents/hawaii_test/fast_cloud1.mp4"  # 曇り
+# mp4_file = "/users/uchukamen/documents/hawaii/meme/2021-12-13-0300-0310-HST.mp4"
 
 
 def remove_noise(frame):
@@ -49,9 +41,10 @@ def main():
     RED = (0, 0, 255)
     GREEN = (0, 255, 0)
 
-    video = pafy.new(url)
-    best = video.getbest(preftype="mp4")
-    cap = cv2.VideoCapture(best.url)
+    # video = pafy.new(url)
+    # best = video.getbest(preftype="mp4")
+    # cap = cv2.VideoCapture(best.url)
+    cap = cv2.VideoCapture(mp4_file)
 
     _tm = cv2.TickMeter()  # FPS計測用
 
@@ -61,7 +54,7 @@ def main():
 
     _frame_sum = None  # 比較明合成結果
     _frame_no = 0
-    
+
     while True:
         _tm.start()
         ret, _frame = cap.read()
@@ -87,6 +80,9 @@ def main():
         # 動き検出用 BW フレーム
         _frame_bw = cv2.cvtColor(_frame_sum, cv2.COLOR_RGB2GRAY)
 
+        _frame_md = np.zeros((1080, 1920), dtype="uint8")  # 減光用
+        _frame_ld = np.zeros((1080, 1920), dtype="uint8")  # 減光用
+
         # 動き検出
         _fgmask = fgbg.apply(_frame_bw)
 
@@ -107,9 +103,21 @@ def main():
                 continue
 
             # 動きを検出したエリアを描画する
-            cv2.drawContours(_frame_sum, contours, i, GREEN, 1)
+            cv2.drawContours(_frame_ld, contours, i, 255, 1)
+            cv2.drawContours(_frame, contours, i, (255, 0, 0), 3)
 
-        cv2.imshow('info_frame', _frame_sum)
+        edges = cv2.Canny(_frame_ld, 100, 200, apertureSize=3)
+
+        lines = cv2.HoughLinesP(edges, rho=1, theta=np.pi /
+                                180, threshold=0, minLineLength=15, maxLineGap=5)
+
+        if lines is not None:
+            for line in lines:
+                x1, y1, x2, y2 = line[0]
+                cv2.line(_frame, (x1, y1), (x2, y2),
+                         (0, 0, 255), 3)  # 緑色で直線を引く
+
+        cv2.imshow('frame', _frame)
 
         # 1秒ごとに、FPS を表示する
         if _frame_no % 30 == 0:

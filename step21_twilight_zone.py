@@ -33,7 +33,7 @@ class TwilightTime(Singleton):
         if not cls._instance:
             super().__new__(cls)
             # ======== 初期化 ======== #  
-            cls.update(JST)
+            cls._instance.update(JST)
             # ======== 初期化 ======== #  
         return cls._instance
 
