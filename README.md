@@ -1,4 +1,4 @@
-# OPEN_SOURCE_METEOR_FINDER
+# Meteor_Finder
 
 ## 概要
 
