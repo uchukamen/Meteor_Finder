@@ -1,13 +1,14 @@
-'''
-YouTube から動画をキャプチャーして表示する
-再生速度を調整する
+''' OpenCV のFPS を調査
 '''
 import cv2
 import apafy as pafy
 from icecream import ic
+import time
 
 ESC_KEY = 27
-URL = "https://www.youtube.com/watch?v=_8rp1p_tWlc"  # ハワイ・マウナケアの星空ライブ
+
+# ハワイ・マウナケアの星空ライブ
+URL = "https://www.youtube.com/watch?v=_8rp1p_tWlc"  # Hawaii
 
 def main():
     video = pafy.new(URL)
@@ -19,14 +20,29 @@ def main():
     H = cap.get(cv2.CAP_PROP_FRAME_HEIGHT) # ビデオの高さを取得
     print(f'WIDTH: {W}, HEIGHT: {H}, FPS: {FPS}')
 
-    _frame_no = 0
-    wait = 1 #　waitKey の初期値
-
     _tm = cv2.TickMeter() # FPS計測用
-    _tm.start()
 
-    while (True):
-        _tm.start()
+    # CASE1 1/30 秒
+    _tm.start()
+    time.sleep(1./30.)  
+    _tm.stop()
+    fps = _tm.getFPS()
+    print(f'FPS 1/30 sec: {fps:.1f}')
+    _tm.reset()
+
+    # CASE2 1秒
+    _tm.start()
+    time.sleep(1.0)
+    _tm.stop()
+    fps = _tm.getFPS()
+    print(f'FPS 1 sec: {fps:.1f}')
+    _tm.reset()
+
+    # CASE3 100フレーム
+    _tm.start()
+    
+    _frame_no = 0
+    while (_frame_no < 100):
         ret, frame = cap.read()
         frame = cv2.UMat(frame)
         
@@ -36,16 +52,15 @@ def main():
         cv2.imshow('frame', frame)
 
         # 終了判定
-        if cv2.waitKey(wait) & 0xFF == ESC_KEY:
+        if cv2.waitKey(1) & 0xFF == ESC_KEY:
             break
 
-        # FPS を表示する
-        _tm.stop()
-        fps = _tm.getFPS()
-        print(f'FPS: {fps:.1f}')
-        _tm.reset()
-
         _frame_no += 1
+
+    _tm.stop()
+    fps = _tm.getFPS() * 100.
+    print(f'平均FPS: {fps:.1f}')
+    _tm.reset()
 
     cap.release()
     cv2.destroyAllWindows()

@@ -1,18 +1,19 @@
 ''' YouTube ハワイ・マウナケアの星空ライブから
     動画をキャプチャーして、比較明合成（コンポジット）した動画を表示する
 '''
-import numpy as np 
 import cv2
 import apafy as pafy
 from icecream import ic
 import os
 import pytz
-from datetime import datetime, date, timedelta, time
+from datetime import datetime
 from pathlib import Path
+import time
 
 # 定義
 ESC_KEY = 27
 SAVE_DIR = os.path.join(os.environ['HOME'], "documents/hawaii_timelapse")
+
 # ハワイ・マウナケアの星空ライブ
 URL_HAWAII = "https://www.youtube.com/watch?v=_8rp1p_tWlc"
 
@@ -21,6 +22,14 @@ def to_hst(dt) -> datetime:
         dt: datetime
     '''
     hst_tz = pytz.timezone("US/Hawaii")
+    return dt.astimezone(hst_tz)
+
+
+def to_utc(dt) -> datetime:
+    ''' 世界標準時へ変更
+        dt: datetime
+    '''
+    hst_tz = pytz.timezone("UTC")
     return dt.astimezone(hst_tz)
 
 
@@ -33,15 +42,12 @@ def _create_dir(filepath):
 def _get_timelapse_image_path(dt) -> str:
     ''' ファイルのパスを取得する
     '''
-    hst = to_hst(dt)
-    date_str = f'{hst:%Y%m%d}'
-    datetime_stamp = f'{hst:%Y%m%d%H%M}'
+    _utc_date_str = f'{to_utc(dt):%Y%m%d}'       # ディレクトリの日にちは UTC表記
+    _filename = f'{to_hst(dt):%Y%m%d%H%M}.jpg'  # ファイル名は HST表記
 
     if os.name == 'posix':
-        _filepath = os.path.join(
-            SAVE_DIR, "timelapse", datetime_stamp + ".jpg")
-        _filepath_comp = os.path.join(
-            SAVE_DIR, "timelapse", datetime_stamp + "_comp.jpg")
+        _filepath = os.path.join(SAVE_DIR, _utc_date_str, _filename)
+        _filepath_comp = _filepath.replace(".jpg", "_comp.jpg")
     else:
         raise(NotImplementedError(os.name))
     return _filepath, _filepath_comp
@@ -63,13 +69,12 @@ def main():
         _tm.start()
         _ret, _frame = _cap.read()
         if _ret == False:
-            ic("動画読込ができませんでした。_cap_read を終了します。")
-            break
+            print("動画読込ができませんでした。", f'{datetime.now():%y/%m/%d %H:%M:%S}')
+            time.sleep(10)  # 10秒スリープ
 
         # 終了判定
         if cv2.waitKey(1) & 0xFF == ESC_KEY:
             break
-
             
         # 比較明合成を実行
         if _frame_comp is None:
@@ -77,9 +82,8 @@ def main():
         # cv2 で比較明合成を実行
         _frame_comp = cv2.max(_frame, _frame_comp)
 
-
         # =============================================
-        # １分に１回、タイムラプス用にフレームを書き出す
+        # 60秒に１回、タイムラプス用にフレームを書き出す
         # =============================================
         if _frame_no % (30 * 60) == 0:
             dt = datetime.now()
@@ -87,7 +91,7 @@ def main():
             _create_dir(_filepath)
             cv2.imwrite(_filepath, _frame)
             cv2.imwrite(_filepath_comp, _frame_comp)
-            # 比較明合成を1分ごとにリセット
+            # 比較明合成をリセット
             _frame_comp = _frame
 
         cv2.imshow('frame', _frame_comp)

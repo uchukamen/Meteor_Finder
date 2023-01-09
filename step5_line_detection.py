@@ -11,9 +11,15 @@ from datetime import datetime
 import math
 
 ESC_KEY = 27
+URL = "https://www.youtube.com/watch?v=_8rp1p_tWlc"  # ハワイ・マウナケアの星空ライブ
 
-# ハワイ・マウナケアの星空ライブ
-url = "https://www.youtube.com/watch?v=_8rp1p_tWlc"
+
+def get_fps(tm) -> float:
+    # FPS を印刷する
+    tm.stop()
+    fps = tm.getFPS()
+    tm.reset()
+    return fps
 
 def remove_noise(frame):
     ''' frame のノイズを除去する
@@ -26,21 +32,13 @@ def remove_noise(frame):
     return result_frame
 
 
-def get_fps(tm):
-    # FPS を調整する
-    tm.stop()
-    fps = tm.getFPS()
-    tm.reset()
-    return fps
-
-
 def main():
     ''' ハワイの星空を比較明合成(Composite)して表示する    
     '''
     RED = (0, 0, 255)
     GREEN = (0, 255, 0)
 
-    video = pafy.new(url)
+    video = pafy.new(URL)
     best = video.getbest(preftype="mp4")
     cap = cv2.VideoCapture(best.url)
 
@@ -100,10 +98,9 @@ def main():
 
         cv2.imshow('info_frame', _frame_sum)
 
-        # 1秒ごとに、FPS を表示する
+        # 30フレームごとに、FPS を表示する
         if _frame_no % 30 == 0:
-            fps = f'{get_fps(_tm):.1f}'
-            ic(fps)
+            print(f'FPS: {get_fps(_tm):.1f}')
 
         _frame_no += 1
 
